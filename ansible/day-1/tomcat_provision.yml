@@ -67,8 +67,8 @@
 
 #    - name: create symlink and chown
 #      file:
-#        src: /home/vagrant/apache-tomcat-8.0.32
-#        dest: /opt/'{{ user_name }}'
+#        src: /home/vagrant/apache-tomcat-{{ tomcat_version }}
+#        dest: /opt/{{ user_name }}
 #        owner: '{{ user_name }}'
 #        group: '{{ user_name }}'
 #        state: link
