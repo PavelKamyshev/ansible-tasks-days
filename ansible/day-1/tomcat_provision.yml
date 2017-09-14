@@ -1,5 +1,5 @@
 - name: tomcat provision
-  hosts: 192.168.1.36
+  hosts: 192.168.1.38
   vars:
     tomcat_version: 8.0.32
     java_version: 8

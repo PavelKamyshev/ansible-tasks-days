@@ -1,0 +1,3 @@
+roles_path=/home/kamyshev/ansible-tasks-days/ansible/day-2/roles
+192.168.1.38 ansible_connection=ssh ansible_ssh_user=vagrant ansible_ssh_private_key_file=/home/kamyshev/.ssh/kamyshevm0
+localkamyshevm0.moscow.epam.com ansible_connection=ssh ansible_ssh_user=vagrant ansible_ssh_private_key_file=/home/kamyshev/.ssh/kamyshevm0

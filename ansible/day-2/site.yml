@@ -1,0 +1,8 @@
+---
+  - name: tomcat provision_day2
+    hosts: 192.168.1.38
+    sudo: yes
+    roles:
+      - java
+      - tomcat
+#      - nginx
