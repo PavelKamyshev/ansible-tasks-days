@@ -1,0 +1,82 @@
+- name: tomcat provision
+  hosts: 192.168.1.36
+  vars:
+    tomcat_version: 8.0.32
+    java_version: 8
+    user_name: tomcat
+
+  tasks:
+    - name: updating and installing java repo
+      shell:
+          add-apt-repository ppa:webupd8team/java
+      args:
+          executable: /bin/bash
+      sudo: yes
+
+    - name: apt-get update
+      apt:
+        update_cache: yes
+      sudo: yes
+
+    - name: accept java license
+      debconf: name="oracle-java{{ java_version }}-installer" question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+      sudo: yes
+
+    - name: install oracle java
+      apt: name={{item}} state=latest
+      with_items:
+        - "oracle-java{{ java_version }}-installer"
+        - ca-certificates
+        - "oracle-java{{ java_version }}-set-default"
+      sudo: yes
+
+    - name: create group tomcat
+      group:
+        name: '{{ user_name }}'
+        state: present
+      sudo: yes
+
+
+    - name: create user tomcat
+      user:
+        name: '{{ user_name }}'
+        group: '{{ user_name }}'
+        createhome: no
+        system: yes
+      sudo: yes
+
+
+    - name: create folder
+      file:
+        path: /opt/{{ user_name }}
+        owner: '{{ user_name }}'
+        group: '{{ user_name }}'
+        state: directory
+      sudo: yes
+
+
+    - name: untar
+      unarchive:
+        src: https://archive.apache.org/dist/tomcat/tomcat-8/v{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz
+        dest: /opt/{{ user_name }}
+        owner: '{{ user_name }}'
+        group: '{{ user_name }}'
+        remote_src: True
+      sudo: yes
+
+
+#    - name: create symlink and chown
+#      file:
+#        src: /home/vagrant/apache-tomcat-8.0.32
+#        dest: /opt/'{{ user_name }}'
+#        owner: '{{ user_name }}'
+#        group: '{{ user_name }}'
+#        state: link
+#        force: yes
+#      sudo: yes
+
+
+    - name: run tomcate
+      shell: nohup bash /opt/tomcat/apache-tomcat-{{ tomcat_version }}/bin/startup.sh
+      become: yes
+      become_user: '{{ user_name }}'
