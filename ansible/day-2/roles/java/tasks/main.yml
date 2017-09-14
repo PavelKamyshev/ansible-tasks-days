@@ -5,8 +5,7 @@
     ignore_errors: True
 
 
-#  - name: install java
-#    when: java_already_install | failed
+
   - name: updating and installing java repo
     when: java_already_install | failed
     shell:
