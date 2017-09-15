@@ -4,5 +4,8 @@
     sudo: yes
     roles:
       - java
+      - java-test
       - tomcat
-#      - nginx
+      - tomcat-test
+      - nginx
+      - nginx-test

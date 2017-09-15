@@ -21,7 +21,7 @@
   - name: add nginx config
     when: nginx_installed | success
     template:
-      src: /home/kamyshev/cm/ansible/day-2/roles/nginx/template/tomcat.conf
+      src: /home/kamyshev/ansible-tasks-days/ansible/day-2/roles/nginx/template/tomcat.conf
       dest: /etc/nginx/conf.d/tomcat.conf
     notify:
       - nginx restart
