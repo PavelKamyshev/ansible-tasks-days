@@ -8,9 +8,6 @@ Vagrant.configure(2) do |config|
 
   config.vm.define "kamyshev0" do |kamyshev0|
     kamyshev0.vm.box = "hashicorp/precise32"
-    #kamyshev0.vm.network "public_network"
-    #kamyshev0.vm.network "private_network", ip: "192.168.0.1"
-    #kamyshev0.vm.hostname = ""
     kamyshev0.vm.network  "forwarded_port", guest: 80, host: 9900
     kamyshev0.vm.network  "forwarded_port", guest: 22, host: 9999
     kamyshev0.vm.provider "virtualbox" do |vb|
