@@ -1,0 +1,18 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  #config.vm.box = "ubuntu/trusty64"
+  config.vm.box_check_update = false
+
+
+  config.vm.define "kamyshev0" do |kamyshev0|
+    kamyshev0.vm.box = "hashicorp/precise32"
+    kamyshev0.vm.network  "forwarded_port", guest: 80, host: 9900
+    kamyshev0.vm.network  "forwarded_port", guest: 22, host: 9999
+    kamyshev0.vm.provider "virtualbox" do |vb|
+    vb.name = "kamyshevm0"
+
+    end
+  end
+end

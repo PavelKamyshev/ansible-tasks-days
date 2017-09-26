@@ -1,0 +1,170 @@
+---
+  - name: create group tomcat
+    group:
+      name: '{{ user_name }}'
+      state: present
+    register: create_group_tomcat
+    sudo: yes
+
+
+  - name: create user tomcat
+    when: create_group_tomcat
+    user:
+      name: '{{ user_name }}'
+      groups: '{{ user_name }}'
+      shell: /bin/bash
+      createhome: no
+      system: yes
+    sudo: yes
+
+
+  - name: create folder
+    file:
+      path: /opt/{{ user_name }}
+      owner: '{{ user_name }}'
+      group: '{{ user_name }}'
+      state: directory
+    ignore_errors: True
+    register: result
+    sudo: yes
+
+
+  - name: download tomcat
+    get_url:
+      url: https://archive.apache.org/dist/tomcat/tomcat-8/v{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz
+      dest: /home/vagrant/
+
+
+
+  - name: verify created folder
+    command: ls {{ tomcat_home }}{{ tomcat_version }}/bin
+    register: folders_already_created
+    ignore_errors: True
+
+  - name: untar tomcat
+    when: folders_already_created | failed
+    unarchive:
+      src: /home/vagrant/apache-tomcat-{{ tomcat_version }}.tar.gz
+      dest: /home/vagrant
+      owner: '{{ user_name }}'
+      group: '{{ user_name }}'
+      remote_src: True
+    sudo: yes
+
+
+#  - name: create symlink and chown
+#    file:
+#      src: /home/vagrant/apache-tomcat-{{ tomcat_version }}
+#      dest: /opt/{{ user_name }}
+#      owner: '{{ user_name }}'
+#      group: '{{ user_name }}'
+#      state: link
+#      force: yes
+#    sudo: yes
+  - name: verify tomcat service
+    command: service tomcat status
+    register: tomcat_already_created
+    ignore_errors: True
+
+#  - debug:
+#      msg: '{{ tomcat_already_created }}'
+
+  - name: copy tomcat
+    when: folders_already_created | failed
+    become: yes
+    command: "mv /home/vagrant/apache-tomcat-{{ tomcat_version }}/ {{ tomcat_home }}{{ tomcat_version }}"
+    become_method: sudo
+
+  - name: changin opt tomcat directory owner and group
+    file:
+        path: "{{ tomcat_home }}{{ tomcat_version }}"
+        recurse: yes
+        owner: '{{ user_name }}'
+        group: '{{ group_name }}'
+        mode: 0755
+    become: yes
+    become_method: sudo
+
+  - name: add tomcat conf
+    shell: |
+        echo 'description "Tomcat Server"
+
+        start on runlevel [2345]
+        stop on runlevel [!2345]
+        respawn
+        respawn limit 10 5
+
+        setuid {{ user_name }}
+        setgid {{ group_name }}
+
+        env JAVA_HOME=/usr/lib/jvm/java-{{ java_version }}-oracle/jre
+        env CATALINA_HOME={{ tomcat_home }}{{ tomcat_version }}
+
+        # Modify these options as needed
+        env JAVA_OPTS="-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom"
+        # env CATALINA_OPTS="-Xms512M -Xmx1024M -server -XX:+UseParallelGC"
+
+        exec $CATALINA_HOME/bin/catalina.sh run
+        # startup.sh
+
+        # cleanup temp directory after stop
+        post-stop script
+           rm -rf $CATALINA_HOME/temp/*
+        end script' > /etc/init/tomcat.conf
+    args:
+      executable: /bin/bash
+    become: yes
+    become_method: sudo
+
+  - name: add tomcat as a service
+    shell: |
+        echo '#!/bin/bash
+        export CATALINA_HOME={{ tomcat_home }}{{tomcat_version}}
+        PATH=/sbin:/bin:/usr/sbin:/usr/bin
+        start() {
+        sh $CATALINA_HOME/bin/startup.sh
+        }
+        stop() {
+        sh $CATALINA_HOME/bin/shutdown.sh
+        }
+        case $1 in
+        start|stop) $1;;
+        restart) stop; start;;
+        *) echo "Run as $0 <start|stop|restart>"; exit 1;;
+        esac' > /etc/init.d/tomcat
+    args:
+      executable: /bin/bash
+    become: yes
+    become_method: sudo
+
+  - name: chmod for tomcat.service
+    file:
+      path: /etc/init.d/tomcat
+      mode: 0755
+    become: yes
+    become_method: sudo
+
+  - name: reload configuration
+    shell:
+        initctl reload-configuration
+    args:
+      executable: /bin/bash
+    become: yes
+    become_method: sudo
+
+  - name: verify users add
+    shell: cat /opt/tomcat/8.0.32/conf/tomcat-users.xml | grep 'roles="admin-gui,standart,manager-gui,manager-script"'
+    register: users_already_add
+    ignore_errors: True
+
+  - name: add users gui
+    when: users_already_add | failed
+    script: ./tomcat-users.sh
+    become: yes
+    become_method: sudo
+
+  - name: restart tomcat service
+    service:
+      name: tomcat
+      state: restarted
+    sudo: yes

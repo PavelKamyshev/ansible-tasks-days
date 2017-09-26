@@ -1,0 +1,16 @@
+---
+  - name: verify created folder
+    command: service tomcat status
+    register: folders_already_created
+    ignore_errors: True
+
+  - name: message of tomcat
+    when: folders_already_created | failed
+    debug:
+      msg: "tomcat not install "
+
+
+  - name: message of tomcat
+    when: folders_already_created | succeeded
+    debug:
+      msg: "tomcat already install"

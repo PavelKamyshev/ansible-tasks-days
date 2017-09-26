@@ -1,0 +1,4 @@
+roles_path=/home/kamyshev/ansible-tasks-days/ansible/day-4/roles
+
+kamyshevm0 ansible_ssh_host=127.0.0.1 ansible_ssh_port=9999 ansible_connection=ssh ansible_ssh_user=vagrant ansible_ssh_private_key_file=/home/kamyshev/ansible-tasks-days/ansible/day-4/.vagrant/machines/kamyshev0/virtualbox/private_key
+#ansible_ssh_pass=vagrant
