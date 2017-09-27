@@ -1,5 +1,7 @@
 ---
   - name: deploy
-    deploy.sh:
-      war: "/vagrant/mnt-lab.war"
-      url: "http://admin:tomcat@127.0.0.1:8080/manager/text/deploy?path=/mnt-lab&update=true"
+    deploy:
+      user: admin
+      password: tomcat
+      war: "/vagrant/hello-war/target/mnt-lab.war"
+      url: "http://127.0.0.1:8080/manager/text/deploy?path=/mnt-lab&update=true"
