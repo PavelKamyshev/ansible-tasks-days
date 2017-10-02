@@ -3,16 +3,19 @@
     service:
       name: tomcat
       state: started
-    sudo: yes
+    become: yes
+    become_method: sudo
 
   - name: tomcat restart
     service:
       name: tomcat
       state: restarted
-    sudo: yes
+    become: yes
+    become_method: sudo
 
   - name: tomcat stop
     service:
       name: tomcat
       state: stopped
-    sudo: yes
+    become: yes
+    become_method: sudo

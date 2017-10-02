@@ -7,12 +7,14 @@
   - name: update
     when: java_already_install | failed
     shell: apt-get update -y
-    sudo: yes
+    become: yes
+    become_method: sudo
 
   - name: update python
     when: java_already_install | failed
     shell: apt-get install python-software-properties -y
-    sudo: yes
+    become: yes
+    become_method: sudo
 
   - name: updating and installing java repo
     when: java_already_install | failed
@@ -20,20 +22,23 @@
         add-apt-repository ppa:webupd8team/java
     args:
         executable: /bin/bash
-    sudo: yes
+    become: yes
+    become_method: sudo
     register: repo_add
 
   - name: apt-get update
     when: java_already_install | failed
     apt:
       update_cache: yes
-    sudo: yes
+    become: yes
+    become_method: sudo
     register: update_cache
 
   - name: accept java license
     when: java_already_install | failed
     debconf: name="oracle-java{{ java_version }}-installer" question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
-    sudo: yes
+    become: yes
+    become_method: sudo
     register: license_accept
 
   - name: install oracle java
@@ -43,4 +48,5 @@
       - "oracle-java{{ java_version }}-installer"
       - ca-certificates
       - "oracle-java{{ java_version }}-set-default"
-    sudo: yes
+    become: yes
+    become_method: sudo

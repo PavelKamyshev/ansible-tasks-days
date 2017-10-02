@@ -4,7 +4,8 @@
       name: '{{ user_name }}'
       state: present
     register: create_group_tomcat
-    sudo: yes
+    become: yes
+    become_method: sudo
 
 
   - name: create user tomcat
@@ -15,7 +16,8 @@
       shell: /bin/bash
       createhome: no
       system: yes
-    sudo: yes
+    become: yes
+    become_method: sudo
 
 
   - name: create folder
@@ -26,10 +28,16 @@
       state: directory
     ignore_errors: True
     register: result
-    sudo: yes
+    become: yes
+    become_method: sudo
 
+  - name: verify tar tomcat
+    command: ls /home/vagrant/apache-tomcat-{{ tomcat_version }}.tar.gz
+    register: verify_tar_tomcat
+    ignore_errors: True
 
   - name: download tomcat
+    when: verify_tar_tomcat| failed
     get_url:
       url: https://archive.apache.org/dist/tomcat/tomcat-8/v{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz
       dest: /home/vagrant/
@@ -49,7 +57,8 @@
       owner: '{{ user_name }}'
       group: '{{ user_name }}'
       remote_src: True
-    sudo: yes
+    become: yes
+    become_method: sudo
 
 
 #  - name: create symlink and chown
@@ -61,13 +70,6 @@
 #      state: link
 #      force: yes
 #    sudo: yes
-  - name: verify tomcat service
-    command: service tomcat status
-    register: tomcat_already_created
-    ignore_errors: True
-
-#  - debug:
-#      msg: '{{ tomcat_already_created }}'
 
   - name: copy tomcat
     when: folders_already_created | failed
@@ -75,7 +77,15 @@
     command: "mv /home/vagrant/apache-tomcat-{{ tomcat_version }}/ {{ tomcat_home }}{{ tomcat_version }}"
     become_method: sudo
 
-  - name: changin opt tomcat directory owner and group
+  - name: verify owner folders
+    shell: ls -lh {{ tomcat_home }} | awk '{print $3}' | grep {{ user_name }}
+    ignore_errors: True
+    args:
+      executable: /bin/bash
+    register: verify_owner_folders
+
+  - name: changing opt tomcat directory owner and group
+    when: verify_owner_folders | failed
     file:
         path: "{{ tomcat_home }}{{ tomcat_version }}"
         recurse: yes
@@ -85,7 +95,16 @@
     become: yes
     become_method: sudo
 
+  - name: verify tomcat conf
+    shell: ls /etc/init/tomcat.conf
+    ignore_errors: True
+    args:
+      executable: /bin/bash
+    register: verify_tomcat_conf
+
+
   - name: add tomcat conf
+    when: verify_tomcat_conf | failed
     shell: |
         echo 'description "Tomcat Server"
 
@@ -116,7 +135,15 @@
     become: yes
     become_method: sudo
 
+  - name: verify tomcat service
+    shell: ps axl | awk '$4=="1"&&$11=="?"{print}' | grep {{ user_name }}
+    args:
+      executable: /bin/bash
+    register: tomcat_service_already_created
+    ignore_errors: True
+
   - name: add tomcat as a service
+    when: tomcat_service_already_created | failed
     shell: |
         echo '#!/bin/bash
         export CATALINA_HOME={{ tomcat_home }}{{tomcat_version}}
@@ -153,7 +180,7 @@
     become_method: sudo
 
   - name: verify users add
-    shell: cat /opt/tomcat/8.0.32/conf/tomcat-users.xml | grep 'roles="admin-gui,standart,manager-gui,manager-script"'
+    shell: cat {{ tomcat_home }}{{tomcat_version}}/conf/tomcat-users.xml | grep 'roles="admin-gui,standart,manager-gui,manager-script"'
     register: users_already_add
     ignore_errors: True
 
@@ -167,4 +194,5 @@
     service:
       name: tomcat
       state: restarted
-    sudo: yes
+    become: yes
+    become_method: sudo

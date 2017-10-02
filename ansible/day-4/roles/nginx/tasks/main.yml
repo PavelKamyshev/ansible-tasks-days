@@ -12,7 +12,8 @@
     apt:
       name: nginx
       update_cache: yes
-    sudo: yes
+    become: yes
+    become_method: sudo
     notify:
       - nginx start
     register: nginx_installed
@@ -25,4 +26,5 @@
       dest: /etc/nginx/conf.d/tomcat.conf
     notify:
       - nginx restart
-    sudo: yes
+    become: yes
+    become_method: sudo
